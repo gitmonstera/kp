@@ -21,6 +21,13 @@ dependencies {
     // (in a separate module for demo project and in testMain).
     // With compose.desktop.common you will also lose @Preview functionality
     implementation(compose.desktop.currentOs)
+
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
+    implementation("org.xerial:sqlite-jdbc:3.34.0")
+    implementation("org.jetbrains.exposed:exposed-core:0.39.2")
+    implementation("org.jetbrains.exposed:exposed-dao:0.39.2")
+    implementation("org.jetbrains.exposed:exposed-jdbc:0.39.2")
+    implementation("org.jetbrains.compose.desktop:desktop-jvm:1.3.0")
 }
 
 compose.desktop {
