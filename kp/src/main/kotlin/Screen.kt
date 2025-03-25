@@ -1,1 +1,1 @@
-enum class Screen { Registration, Login }
+enum class Screen { Registration, Login, Main }
