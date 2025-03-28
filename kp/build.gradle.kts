@@ -26,7 +26,7 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-core:0.43.0")  // Обновлено
     implementation("org.jetbrains.exposed:exposed-dao:0.43.0")  // Обновлено
     implementation("org.jetbrains.exposed:exposed-jdbc:0.43.0")  // Обновлено
-    implementation("org.jetbrains.compose.desktop:desktop-jvm:1.5.0")  // Обновлено
+    implementation("org.jetbrains.compose.desktop:desktop-jvm:1.5.0")
 }
 
 compose.desktop {
