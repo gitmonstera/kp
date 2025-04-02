@@ -4,6 +4,7 @@ plugins {
     kotlin("jvm")
     id("org.jetbrains.compose")
     id("org.jetbrains.kotlin.plugin.compose")
+
 }
 
 group = "com.example"
@@ -28,6 +29,13 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-jdbc:0.43.0")  // Обновлено
     implementation("org.jetbrains.compose.desktop:desktop-jvm:1.5.0")
     implementation("com.google.code.gson:gson:2.8.8")
+
+    implementation("org.jetbrains.compose.ui:ui:1.5.10")
+    implementation("org.jetbrains.compose.foundation:foundation:1.5.10")
+    implementation("org.jetbrains.compose.material:material:1.5.10")
+    implementation("org.jetbrains.compose.runtime:runtime:1.5.10")
+    implementation("org.jetbrains.compose.desktop:desktop:1.5.10")
+
 
 }
 

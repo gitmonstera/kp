@@ -22,9 +22,14 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.google.gson.Gson
+import com.sun.tools.javac.util.Context
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.regex.Pattern
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+
+
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() = application {
@@ -214,24 +219,40 @@ fun LoginScreen(onLoginSuccess: () -> Unit, onRegisterClick: () -> Unit) {
 
 @Composable
 fun MainMenuScreen(onLogoutClick: () -> Unit) {
-    var trafficRules by remember { mutableStateOf<List<TrafficRule>>(emptyList()) }
-
+    var trafficRules by remember { mutableStateOf(listOf("Правило 1", "Правило 2", "Правило 3")) }
+    val scrollState = rememberScrollState()
 
     Box(modifier = Modifier.fillMaxSize()) {
-        BackgroundAnimation()
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(scrollState)
                 .padding(16.dp)
-                .background(Color.White.copy(alpha = 0.8f))
-                .padding(16.dp),
+                .background(Color.White.copy(alpha = 0.8f)),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-//            LaunchedEffect(Unit) {
-//                val json = loadJsonFromFile("pdd.json") // Загрузка JSON-файла
-//                val trafficRuleResponse = Gson().fromJson(json, TrafficRuleResponse::class.java)
-//                trafficRules = trafficRuleResponse.traffic_rules
-//            }
+            Text("Главное меню", fontSize = 24.sp)
+            Spacer(Modifier.height(8.dp))
+
+            Column {
+                trafficRules.forEach { rule ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                        elevation = 4.dp
+                    ) {
+                        Column(modifier = Modifier.padding(8.dp)) {
+                            Text(rule, fontSize = 18.sp, color = Color.Black)
+                        }
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = onLogoutClick) {
+                Text("Выйти")
+            }
         }
     }
 }
