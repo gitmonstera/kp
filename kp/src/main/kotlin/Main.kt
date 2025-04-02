@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import com.google.gson.Gson
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.regex.Pattern
@@ -213,6 +214,9 @@ fun LoginScreen(onLoginSuccess: () -> Unit, onRegisterClick: () -> Unit) {
 
 @Composable
 fun MainMenuScreen(onLogoutClick: () -> Unit) {
+    var trafficRules by remember { mutableStateOf<List<TrafficRule>>(emptyList()) }
+
+
     Box(modifier = Modifier.fillMaxSize()) {
         BackgroundAnimation()
         Column(
@@ -223,18 +227,20 @@ fun MainMenuScreen(onLogoutClick: () -> Unit) {
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Главный экран", fontSize = 24.sp)
-            Spacer(Modifier.height(8.dp))
-
-            Button(onClick = onLogoutClick) {
-                Text("Выйти")
-            }
+//            LaunchedEffect(Unit) {
+//                val json = loadJsonFromFile("pdd.json") // Загрузка JSON-файла
+//                val trafficRuleResponse = Gson().fromJson(json, TrafficRuleResponse::class.java)
+//                trafficRules = trafficRuleResponse.traffic_rules
+//            }
         }
     }
 }
 
 @Composable
 fun SettingsScreen(onBackClick: () -> Unit) {
+    val users = mutableListOf<User>()
+
+
     Box(modifier = Modifier.fillMaxSize()) {
         BackgroundAnimation()
         Column(
@@ -245,12 +251,7 @@ fun SettingsScreen(onBackClick: () -> Unit) {
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Настройки", fontSize = 24.sp)
-            Spacer(Modifier.height(8.dp))
-
-            Button(onClick = onBackClick) {
-                Text("Назад")
-            }
+//            Text("${users.any { it.login }}", fontSize = 24.sp)
         }
     }
 }
