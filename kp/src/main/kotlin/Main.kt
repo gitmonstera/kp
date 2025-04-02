@@ -33,31 +33,35 @@ fun main() = application {
         Scaffold(
             topBar = {
                 if (currentScreen != Screen.Login && currentScreen != Screen.Registration) {
-                    TopAppBar(
-                        title = { Text("Навигация") }
-                    )
+                    TopAppBar(title = { Text("ПДД") })
                 }
             },
             bottomBar = {
                 if (currentScreen != Screen.Login && currentScreen != Screen.Registration) {
-                    BottomNavigationBar(currentScreen) { newScreen ->
-                        currentScreen = newScreen
-                    }
+                    BottomNavigationBar(currentScreen) { newScreen -> currentScreen = newScreen }
                 }
             },
             content = {
                 when (currentScreen) {
                     Screen.Registration -> RegistrationScreen { currentScreen = Screen.Login }
-                    Screen.Login -> LoginScreen { currentScreen = Screen.MainMenu }
+                    Screen.Login -> LoginScreen(
+                        onLoginSuccess = { currentScreen = Screen.MainMenu },
+                        onRegisterClick = { currentScreen = Screen.Registration }
+                    )
                     Screen.MainMenu -> MainMenuScreen { currentScreen = Screen.Login }
                     Screen.Settings -> SettingsScreen { currentScreen = Screen.MainMenu }
+                    Screen.Exams -> ExamsScreen { currentScreen = Screen.MainMenu }
+                    Screen.Tickets -> TicketsScreen { currentScreen = Screen.MainMenu }
+                    Screen.Statistics -> StatisticsScreen { currentScreen = Screen.MainMenu }
                 }
             }
         )
     }
 }
 
-enum class Screen { Registration, Login, MainMenu, Settings }
+
+enum class Screen { Registration, Login, MainMenu, Settings, Exams, Tickets, Statistics }
+
 
 @Composable
 fun BackgroundAnimation() {
@@ -152,7 +156,7 @@ fun RegistrationScreen(onLoginClick: () -> Unit) {
 }
 
 @Composable
-fun LoginScreen(onLoginSuccess: () -> Unit) {
+fun LoginScreen(onLoginSuccess: () -> Unit, onRegisterClick: () -> Unit) {
     var login by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var loginStatus by remember { mutableStateOf<String?>(null) }
@@ -188,7 +192,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 }
 
                 if (success) {
-                    onLoginSuccess() // Переход на главный экран
+                    onLoginSuccess()
                 }
             }) {
                 Text("Войти")
@@ -199,12 +203,13 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
             }
 
             Spacer(Modifier.height(8.dp))
-            Button(onClick = { onLoginSuccess() }) {
+            Button(onClick = onRegisterClick) { // Теперь передаём правильный обработчик
                 Text("Перейти к регистрации")
             }
         }
     }
 }
+
 
 @Composable
 fun MainMenuScreen(onLogoutClick: () -> Unit) {
@@ -260,6 +265,24 @@ fun BottomNavigationBar(currentScreen: Screen, onScreenSelected: (Screen) -> Uni
             onClick = { onScreenSelected(Screen.MainMenu) }
         )
         BottomNavigationItem(
+            icon = { Icon(Icons.Default.Person, contentDescription = "Экзамены") },
+            label = { Text("Экзамены") },
+            selected = currentScreen == Screen.Exams,
+            onClick = { onScreenSelected(Screen.Exams) }
+        )
+        BottomNavigationItem(
+            icon = { Icon(Icons.Default.Person, contentDescription = "Билеты") },
+            label = { Text("Билеты") },
+            selected = currentScreen == Screen.Tickets,
+            onClick = { onScreenSelected(Screen.Tickets) }
+        )
+        BottomNavigationItem(
+            icon = { Icon(Icons.Default.Person, contentDescription = "Статистика") },
+            label = { Text("Статистика") },
+            selected = currentScreen == Screen.Statistics,
+            onClick = { onScreenSelected(Screen.Statistics) }
+        )
+        BottomNavigationItem(
             icon = { Icon(Icons.Default.Settings, contentDescription = "Настройки") },
             label = { Text("Настройки") },
             selected = currentScreen == Screen.Settings,
@@ -267,6 +290,7 @@ fun BottomNavigationBar(currentScreen: Screen, onScreenSelected: (Screen) -> Uni
         )
     }
 }
+
 
 fun isValidEmail(email: String): Boolean {
     val emailPattern = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$")
@@ -291,5 +315,51 @@ object DatabaseHelper {
         return users.any { it.login == login && it.password == password }
     }
 }
+
+@Composable
+fun ExamsScreen(onBackClick: () -> Unit) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        BackgroundAnimation()
+        Column(
+            modifier = Modifier.fillMaxSize().padding(16.dp).background(Color.White.copy(alpha = 0.8f)).padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("Экзамены", fontSize = 24.sp)
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = onBackClick) { Text("Назад") }
+        }
+    }
+}
+
+@Composable
+fun TicketsScreen(onBackClick: () -> Unit) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        BackgroundAnimation()
+        Column(
+            modifier = Modifier.fillMaxSize().padding(16.dp).background(Color.White.copy(alpha = 0.8f)).padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("Билеты", fontSize = 24.sp)
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = onBackClick) { Text("Назад") }
+        }
+    }
+}
+
+@Composable
+fun StatisticsScreen(onBackClick: () -> Unit) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        BackgroundAnimation()
+        Column(
+            modifier = Modifier.fillMaxSize().padding(16.dp).background(Color.White.copy(alpha = 0.8f)).padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("Статистика", fontSize = 24.sp)
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = onBackClick) { Text("Назад") }
+        }
+    }
+}
+
 
 data class User(val fullName: String, val email: String, val login: String, val password: String, val rememberMe: Boolean)
