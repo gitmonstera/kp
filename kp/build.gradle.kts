@@ -35,6 +35,7 @@ dependencies {
     implementation("org.jetbrains.compose.material:material:1.5.10")
     implementation("org.jetbrains.compose.runtime:runtime:1.5.10")
     implementation("org.jetbrains.compose.desktop:desktop:1.5.10")
+    implementation("io.coil-kt:coil-compose:2.4.0")
 
 
 }
