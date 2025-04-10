@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.*
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -313,27 +314,26 @@ fun RuleItem(rule: Rule) {
     Divider(modifier = Modifier.padding(vertical = 4.dp))
 }
 
-// Модели данных для парсинга JSON
 data class TrafficRulesData(
-    val traffic_rules: List<Category>
-)
-
-data class Rule(
-    val id: Int,
-    val termin: String,
-    val description: String,
-    val tags: List<String> = emptyList()  // Provide default value
-)
-
-data class Subcategory(
-    val type: String,
-    val rules: List<Rule> = emptyList()  // Provide default value
+    val traffic_rules: List<Category> = emptyList() // Добавьте значение по умолчанию
 )
 
 data class Category(
-    val category: String,
-    val rules: List<Rule>? = null,  // Mark as nullable
-    val subcategories: List<Subcategory>? = null  // Mark as nullable
+    val category: String? = null, // Добавьте null по умолчанию
+    val rules: List<Rule>? = null,
+    val subcategories: List<Subcategory>? = null
+)
+
+data class Rule(
+    val id: Int = 0, // Значение по умолчанию
+    val termin: String? = null,
+    val description: String? = null,
+    val tags: List<String> = emptyList()
+)
+
+data class Subcategory(
+    val type: String? = null,
+    val rules: List<Rule> = emptyList()
 )
 
 // Константа с JSON данными
@@ -419,7 +419,6 @@ fun ExamsScreen(onBackClick: () -> Unit) {
     }
 }
 
-
 @Composable
 fun TicketsScreen(onBackClick: () -> Unit) {
     val gson = remember { Gson() }
@@ -428,16 +427,16 @@ fun TicketsScreen(onBackClick: () -> Unit) {
     val selectedAnswers = remember { mutableStateListOf<Int?>() }
     var showResult by remember { mutableStateOf(false) }
     var correctCount by remember { mutableStateOf(0) }
+    var isCompleted by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        BackgroundAnimation()
+        val scrollState = rememberScrollState()
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp)
-                .background(Color.White.copy(alpha = 0.8f))
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(scrollState)
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text("Билеты", fontSize = 24.sp)
@@ -450,6 +449,7 @@ fun TicketsScreen(onBackClick: () -> Unit) {
                             selectedTicket = ticket
                             selectedAnswers.clear()
                             repeat(ticket.questions.size) { selectedAnswers.add(null) }
+                            showResult = false
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -462,7 +462,17 @@ fun TicketsScreen(onBackClick: () -> Unit) {
                 Button(onClick = onBackClick) { Text("Назад") }
             } else {
                 Text("Билет", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(8.dp))
+
+                if (showResult) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "Результат: $correctCount из ${selectedTicket!!.questions.size}",
+                        fontSize = 20.sp,
+                        color = Color(0xFF388E3C)
+                    )
+                }
+
+                Spacer(Modifier.height(16.dp))
 
                 selectedTicket!!.questions.forEachIndexed { index, question ->
                     Column(
@@ -471,6 +481,20 @@ fun TicketsScreen(onBackClick: () -> Unit) {
                             .padding(vertical = 8.dp)
                     ) {
                         Text("${index + 1}. ${question.question}", fontSize = 16.sp)
+
+                        question.imageRes?.let { imageRes ->
+                            Spacer(Modifier.height(8.dp))
+                            val painter = painterResource(imageRes)
+                            Image(
+                                painter = painter,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(180.dp)
+                                    .padding(4.dp)
+                            )
+                        }
+
                         Spacer(Modifier.height(4.dp))
 
                         question.answers.forEachIndexed { i, answer ->
@@ -497,13 +521,20 @@ fun TicketsScreen(onBackClick: () -> Unit) {
                     Divider()
                 }
 
-                if (!showResult) {
+
+
+                if (!isCompleted) {
                     Button(
-                        onClick = {val correct = selectedTicket!!.questions.withIndex().count { (i, question) ->
-                            selectedAnswers[i] == question.correctAnswer
-                        }
+                        onClick = {
+                            val correct = selectedTicket!!.questions.withIndex().count { (i, question) ->
+                                selectedAnswers[i] == question.correctAnswer
+                            }
                             correctCount = correct
+                            StatisticsHolder.correctAnswers += correct
+                            StatisticsHolder.incorrectAnswers += selectedTicket!!.questions.size - correct
+                            StatisticsHolder.completedTickets += 1
                             showResult = true
+                            isCompleted = true // Ставим флаг завершения
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -511,18 +542,32 @@ fun TicketsScreen(onBackClick: () -> Unit) {
                     ) {
                         Text("Завершить")
                     }
-                } else {
-                    Text(
-                        text = "Результат: $correctCount из ${selectedTicket!!.questions.size}",
-                        fontSize = 20.sp,
-                        color = Color(0xFF388E3C),
-                        modifier = Modifier.padding(vertical = 12.dp)
-                    )
+                }else {
+                    // Кнопка "Назад к билетам" после завершения
+                    Button(
+                        onClick = {
+                            selectedTicket = null
+                            showResult = false
+                            isCompleted = false // Сброс флага завершения
+                            selectedAnswers.clear()
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp)
+                    ) {
+                        Text("Назад к билетам")
+                    }
                 }
+
+                Spacer(Modifier.height(200.dp)) // отступ для появления кнопки на 1/3 экрана
+                Text(
+                    text="ticket"
+                )
             }
         }
     }
 }
+
 
 // JSON-данные
 val ticketJson = """
@@ -533,14 +578,14 @@ val ticketJson = """
         {
           "question": "Что означает этот знак?",
           "answers": ["Въезд запрещён", "Главная дорога", "Уступи дорогу", "Движение запрещено"],
-          "correctAnswer": 0
+          "correctAnswer": 0,
+          "imageRes": "images/sign.png"
         },
         {
           "question": "С какой максимальной скоростью можно двигаться в городе?",
           "answers": ["50 км/ч", "60 км/ч", "70 км/ч", "80 км/ч"],
           "correctAnswer": 1
         }
-        // Добавь еще 18 вопросов
       ]
     },
     {
@@ -574,16 +619,13 @@ data class Question(
     val question: String,
     val answers: List<String>,
     val correctAnswer: Int,
+    val imageRes: String? = null // путь до изображения в ресурсах
 )
+
+
 
 @Composable
 fun StatisticsScreen(onBackClick: () -> Unit) {
-    val stats = mapOf(
-        "Правильные ответы" to 85,
-        "Неправильные ответы" to 15,
-        "Пройдено билетов" to 10,
-        "Средний балл" to 4.2
-    )
 
     val scrollState = rememberScrollState()
 
@@ -601,30 +643,77 @@ fun StatisticsScreen(onBackClick: () -> Unit) {
             Text("Статистика", fontSize = 24.sp, style = MaterialTheme.typography.h4)
             Spacer(Modifier.height(16.dp))
 
-            stats.forEach { (title, value) ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    elevation = 4.dp
+            // Правильные ответы
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                elevation = 4.dp
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(title, style = MaterialTheme.typography.h6)
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            value.toString(),
-                            style = MaterialTheme.typography.h4,
-                            color = MaterialTheme.colors.primary
-                        )
-                    }
+                    Text("Правильные ответы", style = MaterialTheme.typography.h6)
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "${StatisticsHolder.correctAnswers}",
+                        style = MaterialTheme.typography.h4,
+                        color = MaterialTheme.colors.primary
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // Неправильные ответы
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                elevation = 4.dp
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("Неправильные ответы", style = MaterialTheme.typography.h6)
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "${StatisticsHolder.incorrectAnswers}",
+                        style = MaterialTheme.typography.h4,
+                        color = MaterialTheme.colors.primary
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                elevation = 4.dp
+            ) {
+                Column (
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("колличество билетов", style = MaterialTheme.typography.h6)
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "${StatisticsHolder.completedTickets}",
+                        style = MaterialTheme.typography.h4,
+                        color = MaterialTheme.colors.primary
+                    )
                 }
             }
         }
     }
+
 }
+
+
 @Composable
 fun SettingsScreen(user: User, onSave: (User) -> Unit) {
     var fullName by remember { mutableStateOf(user.fullName) }
@@ -654,6 +743,12 @@ fun SettingsScreen(user: User, onSave: (User) -> Unit) {
     }
 }
 
+
+object StatisticsHolder {
+    var correctAnswers = 0
+    var incorrectAnswers = 0
+    var completedTickets = 0
+}
 
 
 data class User(val fullName: String, val email: String, val login: String, val password: String, val rememberMe: Boolean)
