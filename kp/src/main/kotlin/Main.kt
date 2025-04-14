@@ -34,6 +34,8 @@ import java.io.File
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() = application {
+
+
     var currentScreen by remember { mutableStateOf<Screen?>(null) } // null - пока не знаем куда переходить
     var currentUser by remember { mutableStateOf<User?>(null) }
 
