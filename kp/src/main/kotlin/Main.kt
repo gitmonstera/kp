@@ -35,7 +35,6 @@ import java.io.File
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() = application {
 
-
     var currentScreen by remember { mutableStateOf<Screen?>(null) } // null - пока не знаем куда переходить
     var currentUser by remember { mutableStateOf<User?>(null) }
 
@@ -69,7 +68,8 @@ fun main() = application {
     Window(onCloseRequest = {
         // Сохраняем статистику перед выходом
         StatisticsManager.saveStatistics()
-        exitApplication()}, title = "Аутентификация")
+        exitApplication()}, title = "ПДД",
+        icon = painterResource("icon.png"))
     {
         if (currentScreen == null) {
             // Пока грузим данные - пустой экран
