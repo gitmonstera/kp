@@ -1,5 +1,3 @@
-import org.jetbrains.exposed.dao.id.IntIdTable
-
 data class User(
     val fullName: String = "",
     val email: String = "",
