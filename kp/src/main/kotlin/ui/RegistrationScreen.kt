@@ -1,12 +1,9 @@
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import java.util.regex.Pattern
 
 @Composable
 fun RegistrationScreen(onRegistrationComplete: () -> Unit) {
@@ -15,7 +12,6 @@ fun RegistrationScreen(onRegistrationComplete: () -> Unit) {
     var login by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var rememberMe by remember { mutableStateOf(false) }
-
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Column(
@@ -27,13 +23,28 @@ fun RegistrationScreen(onRegistrationComplete: () -> Unit) {
         Text("📝 Регистрация", style = MaterialTheme.typography.h5)
         Spacer(modifier = Modifier.height(16.dp))
 
-        OutlinedTextField(value = fullName, onValueChange = { fullName = it }, label = { Text("ФИО") })
+        OutlinedTextField(
+            value = fullName,
+            onValueChange = { fullName = it },
+            label = { Text("ФИО") },
+            modifier = Modifier.fillMaxWidth()
+        )
         Spacer(modifier = Modifier.height(8.dp))
 
-        OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") })
+        OutlinedTextField(
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("Email") },
+            modifier = Modifier.fillMaxWidth()
+        )
         Spacer(modifier = Modifier.height(8.dp))
 
-        OutlinedTextField(value = login, onValueChange = { login = it }, label = { Text("Логин") })
+        OutlinedTextField(
+            value = login,
+            onValueChange = { login = it },
+            label = { Text("Логин") },
+            modifier = Modifier.fillMaxWidth()
+        )
         Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
@@ -41,7 +52,7 @@ fun RegistrationScreen(onRegistrationComplete: () -> Unit) {
             onValueChange = { password = it },
             label = { Text("Пароль") },
             visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -75,7 +86,7 @@ fun RegistrationScreen(onRegistrationComplete: () -> Unit) {
 
                 val success = UserRepository.registerUser(newUser)
                 if (success) {
-                    AppPreferences.saveUserCredentials(newUser)
+                    if (rememberMe) AppPreferences.saveUserCredentials(newUser)
                     onRegistrationComplete()
                 } else {
                     errorMessage = "Пользователь с таким логином уже существует"
@@ -101,4 +112,3 @@ fun RegistrationScreen(onRegistrationComplete: () -> Unit) {
         }
     }
 }
-

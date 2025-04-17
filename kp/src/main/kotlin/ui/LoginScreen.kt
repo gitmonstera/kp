@@ -1,9 +1,7 @@
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 
@@ -15,7 +13,6 @@ fun LoginScreen(
     var login by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var rememberMe by remember { mutableStateOf(false) }
-
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Column(
@@ -27,7 +24,13 @@ fun LoginScreen(
         Text("🔐 Вход", style = MaterialTheme.typography.h5)
         Spacer(modifier = Modifier.height(16.dp))
 
-        OutlinedTextField(value = login, onValueChange = { login = it }, label = { Text("Логин") })
+        OutlinedTextField(
+            value = login,
+            onValueChange = { login = it },
+            label = { Text("Логин") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
         Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
@@ -35,7 +38,7 @@ fun LoginScreen(
             onValueChange = { password = it },
             label = { Text("Пароль") },
             visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -50,21 +53,22 @@ fun LoginScreen(
         Button(
             onClick = {
                 if (login.isBlank() || password.isBlank()) {
-                    errorMessage = "Пожалуйста, введите логин и пароль"
+                    errorMessage = "Введите логин и пароль"
                     return@Button
                 }
 
-                val isAuth = UserRepository.authenticateUser(login, password)
-                if (isAuth) {
+                val authenticated = UserRepository.authenticateUser(login, password)
+
+                if (authenticated) {
                     val user = UserRepository.getUser(login)
                     if (user != null) {
-                        val finalUser = user.copy(rememberMe = rememberMe)
+                        val updatedUser = user.copy(rememberMe = rememberMe)
                         if (rememberMe) {
-                            AppPreferences.saveUserCredentials(finalUser)
+                            AppPreferences.saveUserCredentials(updatedUser)
                         } else {
                             AppPreferences.clearCredentials()
                         }
-                        onLoginSuccess(finalUser)
+                        onLoginSuccess(updatedUser)
                     } else {
                         errorMessage = "Пользователь не найден"
                     }

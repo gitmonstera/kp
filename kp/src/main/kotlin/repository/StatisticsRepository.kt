@@ -1,42 +1,112 @@
-import java.util.prefs.Preferences
+
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.transactions.transaction
 
 object StatisticsRepository {
-    private val prefs: Preferences = Preferences.userRoot().node(this::class.java.name)
 
-    private fun key(login: String, type: String): String {
-        return "${type}_$login"
+    private fun getUserIdByLogin(login: String): Int? = transaction {
+        val user = Users.select { Users.login eq login }.singleOrNull()
+        val userId = user?.get(Users.id)
+        println("🔍 getUserIdByLogin('$login') → $userId")
+        userId
     }
 
-    fun getUserStats(login: String): StatisticsData {
-        return StatisticsData(
-            correctAnswers = prefs.getInt(key(login, "correct_answers"), 0),
-            incorrectAnswers = prefs.getInt(key(login, "incorrect_answers"), 0),
-            completedTickets = prefs.getInt(key(login, "completed_tickets"), 0)
-        )
+    fun getUserStats(login: String): StatisticsData = transaction {
+        val userId = getUserIdByLogin(login) ?: return@transaction StatisticsData()
+
+        val row = Statistics.select { Statistics.userId eq userId }.singleOrNull()
+
+        if (row != null) {
+            println("📊 Loaded stats for $login → $row")
+            StatisticsData(
+                correctAnswers = row[Statistics.correctAnswers],
+                incorrectAnswers = row[Statistics.incorrectAnswers],
+                completedTickets = row[Statistics.completedTickets]
+            )
+        } else {
+            println("ℹ️ No stats found for $login. Creating new row.")
+            Statistics.insert {
+                it[Statistics.userId] = userId
+                it[correctAnswers] = 0
+                it[incorrectAnswers] = 0
+                it[completedTickets] = 0
+            }
+            StatisticsData()
+        }
     }
 
-    fun saveOrUpdateStats(login: String, stats: StatisticsData) {
-        prefs.putInt(key(login, "correct_answers"), stats.correctAnswers)
-        prefs.putInt(key(login, "incorrect_answers"), stats.incorrectAnswers)
-        prefs.putInt(key(login, "completed_tickets"), stats.completedTickets)
+    fun addAnswers(login: String, correct: Int, incorrect: Int) = transaction {
+        val userId = getUserIdByLogin(login) ?: run {
+            println("❌ User '$login' not found — cannot add answers.")
+            return@transaction
+        }
+
+        val updated = Statistics.update({ Statistics.userId eq userId }) {
+            with(SqlExpressionBuilder) {
+                it.update(Statistics.correctAnswers, Statistics.correctAnswers + correct)
+                it.update(Statistics.incorrectAnswers, Statistics.incorrectAnswers + incorrect)
+            }
+        }
+
+        println("📥 addAnswers($login): updated = $updated")
+
+        if (updated == 0) {
+            println("➕ No existing row — inserting new statistics row.")
+            Statistics.insert {
+                it[Statistics.userId] = userId
+                it[correctAnswers] = correct
+                it[incorrectAnswers] = incorrect
+                it[completedTickets] = 0
+            }
+        }
     }
 
-    fun addAnswers(login: String, correct: Int, incorrect: Int) {
-        val correctKey = key(login, "correct_answers")
-        val incorrectKey = key(login, "incorrect_answers")
+    fun incrementCompletedTickets(login: String) = transaction {
+        val userId = getUserIdByLogin(login) ?: run {
+            println("❌ User '$login' not found — cannot increment tickets.")
+            return@transaction
+        }
 
-        prefs.putInt(correctKey, prefs.getInt(correctKey, 0) + correct)
-        prefs.putInt(incorrectKey, prefs.getInt(incorrectKey, 0) + incorrect)
+        val updated = Statistics.update({ Statistics.userId eq userId }) {
+            with(SqlExpressionBuilder) {
+                it.update(Statistics.completedTickets, Statistics.completedTickets + 1)
+            }
+        }
+
+        println("📈 incrementCompletedTickets($login): updated = $updated")
+
+        if (updated == 0) {
+            println("➕ No row found, inserting new row with completedTickets = 1")
+            Statistics.insert {
+                it[Statistics.userId] = userId
+                it[correctAnswers] = 0
+                it[incorrectAnswers] = 0
+                it[completedTickets] = 1
+            }
+        }
     }
 
-    fun incrementCompletedTickets(login: String) {
-        val key = key(login, "completed_tickets")
-        prefs.putInt(key, prefs.getInt(key, 0) + 1)
+    fun clearStats(login: String) = transaction {
+        val userId = getUserIdByLogin(login) ?: return@transaction
+
+        Statistics.update({ Statistics.userId eq userId }) {
+            it[correctAnswers] = 0
+            it[incorrectAnswers] = 0
+            it[completedTickets] = 0
+        }
+        println("🧹 Cleared statistics for $login")
     }
 
-    fun clearStats(login: String) {
-        prefs.remove(key(login, "correct_answers"))
-        prefs.remove(key(login, "incorrect_answers"))
-        prefs.remove(key(login, "completed_tickets"))
+    fun getAllUserStats(): List<Pair<String, StatisticsData>> = transaction {
+        (Users innerJoin Statistics).selectAll().map {
+            val login = it[Users.login]
+            val stats = StatisticsData(
+                correctAnswers = it[Statistics.correctAnswers],
+                incorrectAnswers = it[Statistics.incorrectAnswers],
+                completedTickets = it[Statistics.completedTickets]
+            )
+            login to stats
+        }
     }
 }

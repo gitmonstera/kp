@@ -56,24 +56,39 @@ fun TicketsScreen(login: String, onBackClick: () -> Unit) {
             Button(onClick = onBackClick, modifier = Modifier.align(Alignment.CenterHorizontally)) {
                 Text("Назад")
             }
+
         } else {
             selectedTicket!!.questions.forEachIndexed { index, question ->
                 Text("${index + 1}. ${question.question}", fontSize = 16.sp)
                 Spacer(Modifier.height(4.dp))
 
+                question.imageRes?.let { imageRes ->
+                    val painter = painterResource(imageRes)
+                    Image(
+                        painter = painter,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp)
+                            .padding(8.dp)
+                    )
+                }
+
                 question.answers.forEachIndexed { i, answer ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable(enabled = !isCompleted) { selectedAnswers[index] = i }
-                            .background(if (selectedAnswers[index] == i) Color(0xFFD0F0C0) else Color.Transparent)
+                            .clickable(enabled = !isCompleted) {
+                                selectedAnswers[index] = i
+                            }
+                            .background(
+                                if (selectedAnswers[index] == i) Color(0xFFD0F0C0) else Color.Transparent
+                            )
                             .padding(8.dp)
                     ) {
                         RadioButton(
                             selected = selectedAnswers[index] == i,
-                            onClick = {
-                                if (!isCompleted) selectedAnswers[index] = i
-                            }
+                            onClick = { if (!isCompleted) selectedAnswers[index] = i }
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(answer)
@@ -85,21 +100,20 @@ fun TicketsScreen(login: String, onBackClick: () -> Unit) {
             Spacer(Modifier.height(16.dp))
 
             if (!isCompleted) {
-                Button(
-                    onClick = {
-                        val correct = selectedTicket!!.questions.withIndex().count { (i, q) ->
-                            selectedAnswers[i] == q.correctAnswer
-                        }
-                        correctCount = correct
-                        val incorrect = selectedTicket!!.questions.size - correct
-
-                        StatisticsRepository.addAnswers(login, correct, incorrect)
-                        StatisticsRepository.incrementCompletedTickets(login)
-
-                        showResult = true
-                        isCompleted = true
+                Button(onClick = {
+                    val correct = selectedTicket!!.questions.withIndex().count { (i, q) ->
+                        selectedAnswers[i] == q.correctAnswer
                     }
-                ) {
+                    correctCount = correct
+                    val incorrect = selectedTicket!!.questions.size - correct
+
+                    // ✅ Сохраняем в БД
+                    StatisticsRepository.addAnswers(login, correct, incorrect)
+                    StatisticsRepository.incrementCompletedTickets(login)
+
+                    showResult = true
+                    isCompleted = true
+                }) {
                     Text("Завершить")
                 }
             } else {
@@ -111,9 +125,11 @@ fun TicketsScreen(login: String, onBackClick: () -> Unit) {
                     Text("Назад к билетам")
                 }
             }
+            Spacer(Modifier.height(56.dp))
         }
     }
 }
+
 
 
 data class TicketData(
