@@ -34,9 +34,29 @@ fun StatisticsScreen(login: String, onBackClick: () -> Unit) {
             }
         }
 
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 6.dp),
+            elevation = 46.dp,
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Box(modifier = Modifier.padding(20.dp)) {
+                Text("❌ Ошибок: ${stats.incorrectAnswers}", fontSize = 16.sp)
+            }
+        }
 
-        Text("❌ Ошибок: ${stats.incorrectAnswers}", fontSize = 16.sp)
-        Text("🎫 Билетов решено: ${stats.completedTickets}", fontSize = 16.sp)
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 6.dp),
+            elevation = 46.dp,
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Box(modifier = Modifier.padding(20.dp)) {
+                Text("🎫 Билетов решено: ${stats.completedTickets}", fontSize = 16.sp)
+            }
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 

@@ -1,4 +1,6 @@
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -8,6 +10,8 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun SettingsScreen(
     user: User,
+    isDarkTheme: Boolean,
+    onToggleTheme: () -> Unit,
     onSave: (User) -> Unit,
     onLogout: () -> Unit
 ) {
@@ -19,7 +23,8 @@ fun SettingsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(24.dp)
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -89,5 +94,13 @@ fun SettingsScreen(
         ) {
             Text("🗑️ Удалить аккаунт")
         }
+
+        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            Checkbox(checked = isDarkTheme, onCheckedChange = { onToggleTheme() })
+            Text("Темная тема")
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
     }
 }
