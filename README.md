@@ -38,8 +38,3 @@
 ├── AppPreferences.kt      # Хранение авторизации
 ├── Screen.kt              # Навигация
 └── Main.kt                # Точка входа
-
-## 📈 Граф веток (визуально)
-
-🧭 Посмотреть граф веток и историю коммитов можно тут:  
- [GitHub Network Graph](https://github.com/gitmonstera/kp/network)
