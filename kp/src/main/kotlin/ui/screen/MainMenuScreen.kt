@@ -1,3 +1,6 @@
+package ui.screen
+
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -12,6 +15,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.gson.Gson
+import res.JSON_DATA
 
 @Composable
 fun MainMenuScreen(onLogoutClick: () -> Unit) {

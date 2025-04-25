@@ -1,3 +1,6 @@
+package res
+
+
 val ticketJson = """
 {
   "tickets": [

@@ -1,3 +1,5 @@
+package data.model
+
 data class StatisticsData(
     val correctAnswers: Int = 0,
     val incorrectAnswers: Int = 0,

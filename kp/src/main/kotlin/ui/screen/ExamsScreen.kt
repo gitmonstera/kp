@@ -1,15 +1,20 @@
+package ui.screen
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.gson.Gson
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.google.gson.Gson
+import data.repository.StatisticsRepository
+import res.ticketJson
 
 @Composable
 fun ExamsScreen(login: String, onBackClick: () -> Unit) {
@@ -30,6 +35,7 @@ fun ExamsScreen(login: String, onBackClick: () -> Unit) {
 
     val scope = rememberCoroutineScope()
 
+    // ⏱ Таймер
     LaunchedEffect(started) {
         if (started) {
             scope.launch {
@@ -39,8 +45,18 @@ fun ExamsScreen(login: String, onBackClick: () -> Unit) {
                 }
                 if (timerSeconds <= 0) {
                     examFinished = true
+                    started = false
                 }
             }
+        }
+    }
+
+    // 📤 Сохраняем статистику после завершения экзамена
+    LaunchedEffect(examFinished) {
+        if (examFinished && correct + mistakes > 0 && !showFailDialog) {
+            val incorrect = questions.size - correct
+            StatisticsRepository.addAnswers(login, correct, incorrect)
+            StatisticsRepository.incrementCompletedTickets(login)
         }
     }
 
@@ -64,25 +80,22 @@ fun ExamsScreen(login: String, onBackClick: () -> Unit) {
         if (!started) {
             Text("📝 Экзамен", fontSize = 26.sp)
             Spacer(Modifier.height(16.dp))
+
             Button(onClick = { startExam() }) {
                 Text("Начать экзамен")
             }
             Spacer(Modifier.height(16.dp))
+
             Button(onClick = onBackClick) {
                 Text("Назад")
             }
 
-            if (examFinished) {
-                val incorrect = questions.size - correct
-
-                // ✅ Сохраняем в БД
-                StatisticsRepository.addAnswers(login, correct, incorrect)
-                StatisticsRepository.incrementCompletedTickets(login)
-
-                Spacer(Modifier.height(16.dp))
+            if (examFinished && !showFailDialog) {
+                Spacer(Modifier.height(24.dp))
                 Text("✅ Экзамен завершён", fontSize = 20.sp)
                 Text("Правильных: $correct / ${questions.size}")
                 Text("Ошибок: $mistakes")
+
                 Spacer(Modifier.height(16.dp))
                 Button(onClick = { startExam() }) {
                     Text("Пройти заново")
@@ -91,64 +104,73 @@ fun ExamsScreen(login: String, onBackClick: () -> Unit) {
         } else {
             val question = questions.getOrNull(currentIndex)
             if (question != null) {
-                Text("Вопрос ${currentIndex + 1}/${questions.size}", fontSize = 20.sp)
-                Spacer(Modifier.height(8.dp))
-                Text(question.question, fontSize = 18.sp)
-                Spacer(Modifier.height(8.dp))
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    elevation = 8.dp,
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("Вопрос ${currentIndex + 1}/${questions.size}", fontSize = 20.sp)
+                        Spacer(Modifier.height(8.dp))
+                        Text(question.question, fontSize = 18.sp)
 
-                question.imageRes?.let {
-                    val painter = painterResource(it)
-                    Image(
-                        painter = painter,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(180.dp)
-                            .padding(8.dp)
-                    )
-                }
+                        question.imageRes?.let {
+                            val painter = painterResource(it)
+                            Image(
+                                painter = painter,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(180.dp)
+                                    .padding(vertical = 8.dp)
+                            )
+                        }
 
-                question.answers.forEachIndexed { index, answer ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                if (answers[currentIndex] == null) {
-                                    answers[currentIndex] = index
-                                    if (index != question.correctAnswer) {
-                                        mistakes++
-                                        if (mistakes == 1) {
-                                            // При первой ошибке — +5 вопросов
-                                            val newQuestions = allQuestions
-                                                .filterNot { questions.contains(it) }
-                                                .shuffled()
-                                                .take(5)
-                                            questions = questions + newQuestions
-                                            repeat(5) { answers.add(null) }
+                        question.answers.forEachIndexed { index, answer ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        if (answers[currentIndex] == null) {
+                                            answers[currentIndex] = index
+                                            if (index != question.correctAnswer) {
+                                                mistakes++
+                                                if (mistakes == 1) {
+                                                    val newQuestions = allQuestions
+                                                        .filterNot { questions.contains(it) }
+                                                        .shuffled()
+                                                        .take(5)
+                                                    questions = questions + newQuestions
+                                                    repeat(5) { answers.add(null) }
+                                                }
+                                                if (mistakes > 2) {
+                                                    showFailDialog = true
+                                                    started = false
+                                                }
+                                            } else {
+                                                correct++
+                                            }
+
+                                            if (currentIndex + 1 < questions.size) {
+                                                currentIndex++
+                                            } else {
+                                                examFinished = true
+                                                started = false
+                                            }
                                         }
-                                        if (mistakes > 2) {
-                                            showFailDialog = true
-                                        }
-                                    } else {
-                                        correct++
                                     }
-
-                                    if (currentIndex + 1 < questions.size) {
-                                        currentIndex++
-                                    } else {
-                                        examFinished = true
-                                        started = false
-                                    }
-                                }
+                                    .padding(8.dp)
+                            ) {
+                                RadioButton(
+                                    selected = answers[currentIndex] == index,
+                                    onClick = null
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(answer)
                             }
-                            .padding(8.dp)
-                    ) {
-                        RadioButton(
-                            selected = answers[currentIndex] == index,
-                            onClick = null
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(answer)
+                        }
                     }
                 }
 
@@ -158,7 +180,6 @@ fun ExamsScreen(login: String, onBackClick: () -> Unit) {
             }
         }
 
-        // ❗ Диалог: экзамен не сдан
         if (showFailDialog) {
             AlertDialog(
                 onDismissRequest = {},
@@ -168,6 +189,7 @@ fun ExamsScreen(login: String, onBackClick: () -> Unit) {
                     Button(onClick = {
                         showFailDialog = false
                         started = false
+                        examFinished = false
                     }) {
                         Text("Ок")
                     }

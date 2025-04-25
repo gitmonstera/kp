@@ -1,4 +1,7 @@
- val JSON_DATA = """
+package res
+
+
+val JSON_DATA = """
 {
   "traffic_rules": [
   {

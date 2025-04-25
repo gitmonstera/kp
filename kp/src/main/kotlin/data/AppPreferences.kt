@@ -1,5 +1,9 @@
-import User
+package data
+
+
+import data.bd.Users
 import com.google.gson.Gson
+import data.model.User
 import java.io.File
 
 object AppPreferences {

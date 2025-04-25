@@ -1,5 +1,9 @@
+package data.repository
+
 
 import org.jetbrains.exposed.sql.*
+import data.bd.Users
+import data.model.User
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 

@@ -1,3 +1,6 @@
+package ui.screen
+
+
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,6 +13,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.gson.Gson
+import res.ticketJson
+import data.repository.StatisticsRepository
 
 @Composable
 fun TicketsScreen(login: String, onBackClick: () -> Unit) {
@@ -59,42 +64,58 @@ fun TicketsScreen(login: String, onBackClick: () -> Unit) {
 
         } else {
             selectedTicket!!.questions.forEachIndexed { index, question ->
-                Text("${index + 1}. ${question.question}", fontSize = 16.sp)
-                Spacer(Modifier.height(4.dp))
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    elevation = 6.dp,
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text("${index + 1}. ${question.question}", fontSize = 16.sp)
+                        Spacer(Modifier.height(6.dp))
 
-                question.imageRes?.let { imageRes ->
-                    val painter = painterResource(imageRes)
-                    Image(
-                        painter = painter,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(180.dp)
-                            .padding(8.dp)
-                    )
-                }
-
-                question.answers.forEachIndexed { i, answer ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(enabled = !isCompleted) {
-                                selectedAnswers[index] = i
+                        question.imageRes?.let { imagePath ->
+                            runCatching {
+                                val painter = painterResource(imagePath)
+                                Image(
+                                    painter = painter,
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(180.dp)
+                                        .padding(4.dp)
+                                )
                             }
-                            .background(
-                                if (selectedAnswers[index] == i) Color(0xFFD0F0C0) else Color.Transparent
-                            )
-                            .padding(8.dp)
-                    ) {
-                        RadioButton(
-                            selected = selectedAnswers[index] == i,
-                            onClick = { if (!isCompleted) selectedAnswers[index] = i }
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(answer)
+                        }
+
+                        Spacer(Modifier.height(6.dp))
+
+                        question.answers.forEachIndexed { i, answer ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(enabled = !isCompleted) {
+                                        selectedAnswers[index] = i
+                                    }
+                                    .background(
+                                        if (selectedAnswers[index] == i) Color(0xFFD0F0C0)
+                                        else Color.Transparent
+                                    )
+                                    .padding(8.dp)
+                            ) {
+                                RadioButton(
+                                    selected = selectedAnswers[index] == i,
+                                    onClick = {
+                                        if (!isCompleted) selectedAnswers[index] = i
+                                    }
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(answer)
+                            }
+                        }
                     }
                 }
-                Divider()
             }
 
             Spacer(Modifier.height(16.dp))
@@ -107,7 +128,6 @@ fun TicketsScreen(login: String, onBackClick: () -> Unit) {
                     correctCount = correct
                     val incorrect = selectedTicket!!.questions.size - correct
 
-                    // ✅ Сохраняем в БД
                     StatisticsRepository.addAnswers(login, correct, incorrect)
                     StatisticsRepository.incrementCompletedTickets(login)
 
@@ -125,10 +145,12 @@ fun TicketsScreen(login: String, onBackClick: () -> Unit) {
                     Text("Назад к билетам")
                 }
             }
+
             Spacer(Modifier.height(56.dp))
         }
     }
 }
+
 
 
 

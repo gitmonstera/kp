@@ -1,4 +1,5 @@
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -6,10 +7,16 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import data.AppPreferences
+import data.bd.DatabaseFactory
+import data.model.User
+import data.repository.UserRepository
 import kotlinx.coroutines.delay
+import ui.BottomNavigationBar
+import ui.screen.*
 import java.util.regex.Pattern
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -43,14 +50,27 @@ fun main() = application {
         icon = painterResource("icon.png")
     ) {
         MaterialTheme(colors = if (isDarkTheme) darkColors() else lightColors()) {
-            Box(Modifier
-                .fillMaxSize()) {
-                // 🎨 Задний фон
+            Box(modifier = Modifier.fillMaxSize()) {
+
+                // 🎨 Фоновые изображения
                 BackgroundAnimation()
 
+                // 🌗 2. Мягкий фильтр в зависимости от темы
+                val overlayColor = if (isDarkTheme)
+                    Color(0xFF121212).copy(alpha = 0.4f) // глубокий тёмно-синий
+                else
+                    Color.White.copy(alpha = 0.4f)        // светлый рассеянный
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(overlayColor)
+                )
+
+                // 🧱 UI
                 if (currentScreen != null) {
                     Scaffold(
-                        backgroundColor = Color.Transparent, // важно!
+                        backgroundColor = Color.Transparent,
                         topBar = {
                             if (currentScreen != Screen.Login && currentScreen != Screen.Registration) {
                                 TopAppBar(title = { Text("ПДД") })

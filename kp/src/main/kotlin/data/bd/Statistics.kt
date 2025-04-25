@@ -1,3 +1,6 @@
+package data.bd
+
+
 import org.jetbrains.exposed.sql.Table
 
 object Statistics : Table() {
